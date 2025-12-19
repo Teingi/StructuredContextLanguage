@@ -36,7 +36,14 @@ HardCode
 - [ ] We provides workflow and let people able to config it.(Configurable)
 - [ ] We provides sdk let people implements their own.(Hardcode)
 
-- [ ] Obversbility —— otel.
+- [x] Obversbility —— otel.
+> 
+```
+docker run -p 8000:8000 -p 4317:4317 -p 4318:4318 ghcr.io/ctrlspice/otel-desktop-viewer:latest-amd64
+export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317"
+export OTEL_TRACES_EXPORTER="otlp"
+export OTEL_EXPORTER_OTLP_PROTOCOL="grpc"
+```
 
 - [ ] Function selction.
    - [ ] "Progressive loading" base on RAG. (Autonomy)
@@ -52,56 +59,6 @@ HardCode
 - [ ] Content Autonomy.
     - [ ] RAG support by default.(Autonomy)
     - [ ] Hard code as input prompt content.(Hardcode control by human)
-
-## LLM Chat Implementation
-
-This repository includes a flexible LLM chat implementation that supports both OpenAI and Anthropic providers with function calling capabilities:
-
-- `llm_chat.py`: Core implementation supporting both OpenAI and Anthropic
-- `example_llm_usage.py`: Examples of how to use the LLM chat functionality
-
-### Features
-
-- **Multi-provider support**: Works with both OpenAI and Anthropic APIs
-- **Function calling**: Supports tool/function calling with OpenAI models
-- **OpenTelemetry integration**: Built-in tracing for observability
-- **Extensible design**: Easy to add new providers or functions
-
-### Usage
-
-1. Set your API keys as environment variables:
-   ```bash
-   export OPENAI_API_KEY="your-openai-key"
-   export ANTHROPIC_API_KEY="your-anthropic-key"
-   ```
-
-2. Use in your code:
-   ```python
-   from llm_chat import LLMChat
-   
-   # Initialize with OpenAI
-   llm = LLMChat(provider="openai")
-   
-   # Simple chat
-   messages = [
-       {"role": "system", "content": "You are a helpful assistant."},
-       {"role": "user", "content": "Hello!"}
-   ]
-   response = llm.chat(messages)
-   print(response["content"])
-   ```
-
-### Testing
-
-The project includes a comprehensive test suite:
-
-- `tests/test_llm_chat.py`: Unit tests for the LLM chat implementation
-- `run_tests.py`: Test runner script
-
-To run the tests:
-```bash
-python run_tests.py
-```
 
 ## todo
 Find some agent bench mark for testing.
