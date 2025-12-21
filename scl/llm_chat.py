@@ -5,8 +5,14 @@ from function_reg import FunctionRegistry
 from scl.embeddings.impl import OpenAIEmbedding
 from scl.storage.pg import PgVectorFunctionStore
 
-def send_messages(client, model, messages,registry):
-    tools = registry.getTools(messages[0]['content'])
+def send_messages(client, model, registry, messages, ToolNames):
+    tools_named = registry.getToolsByNames(ToolNames)
+    tools_autonomy = registry.getTools(messages[0]['content'])
+    tools = []
+    for tool in tools_named:
+        tools.append(tool)
+    for tool in tools_autonomy:
+        tools.append(tool)
     print(tools)
     response = client.chat.completions.create(
         model=model,
@@ -15,26 +21,26 @@ def send_messages(client, model, messages,registry):
     )
     return response.choices[0].message
 
-def function_call_playground(client, model, messages, registry):    
-    response = send_messages(client, model, messages, registry)
+def function_call_playground(client, model, registry, messages, ToolNames):    
+    response = send_messages(client, model, registry, messages, ToolNames)
     # todo, feedback loop model(langchain)
     print(response)
-    for tool_call in response.tool_calls:
-        func1_name = tool_call.function.name
-        func1_args = tool_call.function.arguments
-        print(func1_name)
-        print(func1_args)
-        args_dict = json.loads(func1_args)
-        func1_out = registry.call_function_safe(func1_name,args_dict)
+    if response.tool_calls:
+        for tool_call in response.tool_calls:
+            func1_name = tool_call.function.name
+            func1_args = tool_call.function.arguments
+            print(func1_name)
+            print(func1_args)
+            args_dict = json.loads(func1_args)
+            func1_out = registry.call_function_safe(func1_name,args_dict)
 
-        messages.append(response)
-        messages.append({
-            'role': 'tool',
-            'content': f'{func1_out}',
-            'tool_call_id': tool_call.id
-        })
-    # print(messages)
-    response = send_messages(client, model, messages, registry)
+            messages.append(response)
+            messages.append({
+                'role': 'tool',
+                'content': f'{func1_out}',
+                'tool_call_id': tool_call.id
+             })
+        response = send_messages(client, model, registry, messages, ToolNames)
     return response.content
   
 ## init for test
@@ -54,6 +60,7 @@ function_store = PgVectorFunctionStore(
         )
 registry = FunctionRegistry(function_store, True)
 
+## Function Reg
 registry.insert_function(
     function_name="add",
     function_body="""
@@ -176,7 +183,15 @@ def compare(a: float, b: float):
     function_description="比较两个数字，哪个更大"
 )
 
+## Test with chat
+### Function call Autonomy by RAG
 messages = [{'role': 'user', 'content': "用中文回答：单词strawberry中有多少个字母r?"}]
-print(function_call_playground(client, model, messages, registry))
+print(function_call_playground(client, model, registry, messages, []))
 messages = [{'role': 'user', 'content': "用中文回答：9.11和9.9，哪个小?"}]
-print(function_call_playground(client, model, messages, registry))
+print(function_call_playground(client, model, registry, messages, []))
+
+### Function call Autonomy by RAG + User specific
+messages = [{'role': 'user', 'content': "用中文回答：单词strawberry中有多少个字母r?"}]
+print(function_call_playground(client, model, registry, messages, ["count_letter"]))
+messages = [{'role': 'user', 'content': "用中文回答：9.11和9.9，哪个小?"}]
+print(function_call_playground(client, model, registry, messages, ["compare"]))

@@ -1,5 +1,6 @@
 import sys
 import os
+from typing import List
 
 # Add the StructuredContextLanguage directory to the path
 scl_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -39,6 +40,21 @@ class FunctionRegistry:
             'compare': compare,
             'count_letter': count_letter
         }
+    
+    ## RAG search between context and function description after embedding
+    ## Return function in openAI tool format
+    def getToolsByNames(self, ToolNames: List[str]):
+        functions = []
+        if self.function_store is None:
+            print("Database not initialized. Cannot perform similarity search.")
+            return []
+        for tool_name in ToolNames:
+            print(f"Searching for function: {tool_name}")
+            function = self.function_store.get_function_by_name(tool_name)
+            print(function)
+            if function:
+                functions.append(function[0])
+        return functions
     
     ## RAG search between context and function description after embedding
     ## Return function in openAI tool format

@@ -1,5 +1,4 @@
 import psycopg2
-from psycopg2.extras import execute_values
 import sys
 import os
 import json
@@ -348,14 +347,7 @@ class PgVectorFunctionStore:
                         llm_desc = json.loads(row[3]) if row[3] else {}
                     except:
                         llm_desc = row[3]
-                    
-                    functions.append({
-                        'id': row[0],
-                        'name': row[1],
-                        'body': row[2],
-                        'llm_description': llm_desc,
-                        'description': row[4]
-                    })
+                    functions.append(llm_desc)
                 print(f"找到 {len(functions)} 个名为 '{function_name}' 的函数")
                 return functions
             else:
@@ -366,7 +358,7 @@ class PgVectorFunctionStore:
             print(f"查询失败: {e}")
             return []
     
-    def search_by_similarity(self, query_text, limit=5, min_similarity=0.4):
+    def search_by_similarity(self, query_text, limit=5, min_similarity=0.5):
         """根据描述相似度查询函数"""
         try:
             # 为查询文本生成嵌入向量
@@ -393,28 +385,18 @@ class PgVectorFunctionStore:
             
             if results:
                 similar_functions = []
-                debugging = []
                 for row in results:
                     try:
                         llm_desc = json.loads(row[2]) if row[2] else {}
                     except:
                         llm_desc = row[2]
-                    debugging.append({
-                        'name': row[0],
-                        'body': row[1],
-                        'llm_description': llm_desc,
-                        'description': row[3],
-                        'similarity': float(row[4])  # 转换为Python float
-                    })
                     if float(row[4]) < min_similarity:
                         print(f"{row[0]} 相似度 {row[4]} 低于阈值 {min_similarity}")
                         continue
                     # 解析llm_description JSON
                     similar_functions.append(llm_desc)
-                    
                 
                 print(f"找到 {len(similar_functions)} 个相似函数")
-                print(debugging)
                 return similar_functions
             else:
                 print("未找到相似函数")

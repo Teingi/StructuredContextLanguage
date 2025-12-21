@@ -46,10 +46,9 @@ export OTEL_EXPORTER_OTLP_PROTOCOL="grpc"
 ```
 
 - [ ] Function selction.
-   - [ ] "Progressive loading" base on RAG. (Autonomy)
+   - [x] "Progressive loading" base on RAG. (Autonomy)
    - [ ] Hard code memory tool invoke. (Autonomy or defualt? tbd)
-   - [ ] Hardcode control by human, as index hint for SQL?.
-   - [ ] Hardcode control by human as input.
+   - [x] Hardcode control by human, as index hint for SQL.
 
 - [ ] File format Autonomy, took PDF format as example.
     - [ ] Context auto into markdown.(Autonomy)
