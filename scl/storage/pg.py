@@ -9,7 +9,7 @@ sys.path.append(scl_root)
 
 from scl.embeddings.impl import OpenAIEmbedding
 from scl.trace import tracer
-from .base import FunctionStoreBase
+from scl.storage.base import FunctionStoreBase
 
 # Import pgvector Vector class for proper vector handling
 Vector = None

@@ -41,7 +41,7 @@ def function_call_playground(client, model, registry, messages, ToolNames):
     response = send_messages(client, model, registry, messages, ToolNames,0)
     # todo, feedback loop model(langchain)
     logging.info(response)
-    if response.tool_calls:
+    if response.tool_calls and registry.support_functionCall():
         for tool_call in response.tool_calls:
             func1_name = tool_call.function.name
             func1_args = tool_call.function.arguments
