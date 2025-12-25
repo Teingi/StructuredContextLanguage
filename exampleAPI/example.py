@@ -2,7 +2,11 @@
 import os
 from openai import OpenAI
 import sys
-
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 # Add the parent directory to the path to enable imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
