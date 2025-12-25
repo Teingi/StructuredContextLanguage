@@ -3,6 +3,7 @@ import os
 import json
 import logging
 import hashlib
+import time
 from pathlib import Path
 import numpy as np
 
@@ -21,10 +22,28 @@ from scl.storage.skills_ref.models import SkillProperties
 
 
 class SkillStore(FunctionStoreBase):
-    def __init__(self, folder, embedding_service=None):
+    def __init__(self, folder, init=True, embedding_service=None):
         super().__init__()
         self.folder = folder
         self.embedding_service = embedding_service
+        # Initialize cache for skill description embeddings
+        self._skill_embedding_cache = {}
+        if init:
+            dir_path = Path(self.folder).resolve()
+            for item in dir_path.iterdir():
+                if item.is_dir():
+                    try:
+                        skill_props = read_properties(item)
+                        # Pre-populate the cache with skill description embeddings
+                        
+                        skill_embedding = self.generate_embedding(skill_props.description)
+                        time.sleep(10) ## workaround for rate limiting
+                        self._skill_embedding_cache[str(item)] = {
+                            "skill_props": skill_props,
+                            "embedding": skill_embedding
+                        }
+                    except Exception as e:
+                        logging.error(f"Error reading properties for {item}: {e}")
 
     def cosine_similarity(self, vec1, vec2):
         """
@@ -69,22 +88,21 @@ class SkillStore(FunctionStoreBase):
         """根据描述相似度查询函数"""
         result = {}
         query_embedding = self.generate_embedding(query_text)
-        dir_path = Path(self.folder).resolve()
-        for item in dir_path.iterdir():
-            logging.info(f"Processing {item} for skill")
-            print(f"Processing {item} for skill")
-            if item.is_dir():
-                try:
-                    skill_props = read_properties(item)
-                    logging.info(f"skill found {skill_props.name}")
-                    print(f"skill found {skill_props.name}")
-                    skill_embedding = self.generate_embedding(skill_props.description)
-                    print(self.cosine_similarity(query_embedding, skill_embedding))
-                    result[str(item)] = skill_props
-                except Exception as e:
-                    print(f"Error reading properties for {item}: {e}")
-                    logging.error(f"Error reading properties for {item}: {e}")
-        #print(result)
+        
+        # Use cached embeddings instead of recalculating
+        for skill_path, skill_data in self._skill_embedding_cache.items():
+            skill_embedding = skill_data["embedding"]
+            similarity = self.cosine_similarity(query_embedding, skill_embedding)
+            
+            if similarity >= min_similarity:
+                # Use the skill_props directly from the cache
+                skill_props = skill_data["skill_props"]
+                logging.info(f"skill found {skill_props.name} with similarity {similarity}")
+                result[skill_path] = skill_props
+            
+            if len(result) >= limit:
+                break
+        
         return result    
 
 
@@ -103,7 +121,7 @@ class SkillStore(FunctionStoreBase):
 
 def main():
     skill_store = SkillStore(folder="./skills/skills",embedding_service=OpenAIEmbedding())
-    skill_store.search_by_similarity("Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration.")
+    print(skill_store.search_by_similarity("Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration."))
 
 if __name__ == "__main__":
     main()
